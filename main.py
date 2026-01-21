@@ -124,9 +124,9 @@ def purch(call):
             def apply_promo(call):
                 try:
                     users_settings[call.message.chat.id]["price"] /= user_promos[call.message.chat.id]["/"]
-                except: users_settings[message.chat.id]["params"] += f". Бот промо: / на {user_promos[call.message.chat.id]["/"]}"
+                except: users_settings[call.message.chat.id]["params"] += f". Бот промо: / на {user_promos[call.message.chat.id]["/"]}"
                 
-                print_message("Промокод применён!")
+                print_message(call.message, "Промокод применён!")
                 getCount(call.message)
                 
             
@@ -257,18 +257,16 @@ def get_promocode(message):
             try: 
                 user_promos[message.chat.id]
             except KeyError: 
-                print_message(message, "Такого промокода не существует. Проверьте правильность написания и актуальность и введите другой промокод или  /start для появления главного меню. Мы всегда пишем в @Burrbedy о появлении новых и завершениях действия старых промокодов!")
+                print_message(message, "Такого промокода не существует. Проверьте правильность написания и актуальность и введите другой промокод или /start для появления главного меню.")
                 bot.register_next_step_handler(message, get_promocode)
                 return
             
             # Use current_promo to avoid redundant lookups and potential KeyError
             current_promo = user_promos[message.chat.id]
             if current_promo["limit"] > 0 or current_promo["limit"] == -1:
-                # The logic in the original code seems to be trying to access parse_file again
-                # but it was using the user_promos dictionary incorrectly
                 print_message(message, "Промокод активирован!")
             else:
-                print_message(message, "Этот промокод уже активирован кем то другим!")
+                print_message(message, "Этот промокод уже активирован кем-то другим!")
     except: 
         print_message(message, "Пока что нет доступных промокодов!")
         
