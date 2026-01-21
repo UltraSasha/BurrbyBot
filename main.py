@@ -79,22 +79,24 @@ def purch(call):
     butts_group = ButtGroup(row_width=1)
     
     for index, item in enumerate(GOODS):
-        butts_group.add(Button(f"{item["name"]}", 
+        butts_group.add(Button(f"{item['name']}", 
         callback_data=str(index)))
         
-        
-        @bot.callback_query_handler(
-        eval(f"""lambda call: call.data.isnumeric() and GOODS[int(call.data)]["name"] == "{item["name"]}" """, globals=globals(), locals=locals())
-        )
-        def callButtonReturn(call):
-            users_settings[call.message.chat.id] = {}
-            users_settings[call.message.chat.id]["id"] = int(call.data)
-            id = users_settings[call.message.chat.id]["id"]
-            users_settings[call.message.chat.id]["price"] = GOODS[id]["price"]
-            item = GOODS[id]
-            if item["params"]:
-                print_message(call.message, f"Вы выбрали {item["name"].lower()}  по цене {item["price"] if item["price"] != None else ", которая зависит от того, что вы сейчас введёте"}. Пожалуйста, введите {item["params"]}")
-                bot.register_next_step_handler(call.message, getParams)
+        # Use a closure instead of eval to avoid TypeError and security risks
+        def make_callback_handler(current_item):
+            @bot.callback_query_handler(lambda call: call.data.isnumeric() and GOODS[int(call.data)]["name"] == current_item["name"])
+            def callButtonReturn(call):
+                users_settings[call.message.chat.id] = {}
+                users_settings[call.message.chat.id]["id"] = int(call.data)
+                id = users_settings[call.message.chat.id]["id"]
+                users_settings[call.message.chat.id]["price"] = GOODS[id]["price"]
+                item = GOODS[id]
+                if item["params"]:
+                    print_message(call.message, f"Вы выбрали {item['name'].lower()} по цене {item['price'] if item['price'] != None else ', которая зависит от того, что вы сейчас введёте'}. Пожалуйста, введите {item['params']}")
+                    bot.register_next_step_handler(call.message, getParams)
+            return callButtonReturn
+
+        make_callback_handler(item)
                 
         def getParams(message):
             params = message.text
@@ -131,7 +133,7 @@ def purch(call):
             @bot.callback_query_handler(lambda call: call.data == "ok")
             def post(call):
                 try:
-                	post_purch(call.message)
+                        post_purch(call.message)
                 except AdminNotConfigured: return
                 
                 counter = 0
@@ -186,8 +188,8 @@ def post_purch(message):
 <b>Итоговая стоимость: </b>{price * count if price != None else "зависит от заказа"}"""
             logger.log("info", admin_message_text)
             print_message(admin, 
-												admin_message_text,
-												butt_group=butt_group)
+                                                                                                admin_message_text,
+                                                                                                butt_group=butt_group)
     except FileNotFoundError:
         print_message(message, "Кажется, бот ещё не настроен. Напишите в сообщения каналу @Burrbedy, что бы узнать причину проблемы и способы её решения.")
         raise AdminNotConfigured
@@ -197,15 +199,15 @@ def any_request(message):
     def get_any_request_number(message):
         try: int(message.text)
         except:
-        	print_message(message, "Это не номер заказа! Введите другой.")
-        	bot.register_next_step_handler(message, get_any_request_number)
-        	return
+                print_message(message, "Это не номер заказа! Введите другой.")
+                bot.register_next_step_handler(message, get_any_request_number)
+                return
         if os.path.exists(admin_filename):
-        	with open(admin_filename) as file:
-        	   admin = int(file.read())
-        	   if message.chat.id != admin:
-        	       print_message(message, "Вы не админ, что бы отвечать на заказы!")
-        	       return
+                with open(admin_filename) as file:
+                   admin = int(file.read())
+                   if message.chat.id != admin:
+                       print_message(message, "Вы не админ, что бы отвечать на заказы!")
+                       return
         if os.path.exists(f"purch_{int(message.text)}.log"):
             print_message(message, "Введите текст ответа, пожалуйста")
             tmp["reqwests"][message.chat.id] = int(message.text)
