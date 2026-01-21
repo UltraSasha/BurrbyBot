@@ -23,7 +23,7 @@ user_promos = {}
 users_settings = {}
 tmp = {"reqwests": {}}
 admin_filename = "admin.id"
-logger = Logger("server")
+logger = Logger("server.log")
 
 ButtGroup = types.InlineKeyboardMarkup
 Button = types.InlineKeyboardButton
@@ -244,6 +244,7 @@ def get_promocode(message):
     
     if message.text == "/start":
         start(message)
+        return
 
     try:
         with open("promocodes.json", "r") as file:
@@ -253,17 +254,21 @@ def get_promocode(message):
                     user_promos[message.chat.id] = {"limit": parse_file[message.text.strip()]["limit"], "/": parse_file[message.text.strip()]["/"]}
                     break
                     
-            try: user_promos[message.chat.id]
-            except KeyError: print_message(message, "Такого промокода не существует. Проверьте правильность написания и актуальность и введите другой промокод или  /start для появления главного меню. Мы всегда пишем в @Burrbedy о появлении новых и завершениях действия старых промокодов!")
-            else: 
-                    if parse_file[user_promos[message.chat.id]]["limit"] > 0:
-                        user_promos[message.chat.id]["/"] = parse_file[user_promos[message.chat.id]["/"]]
-                        print_message(message, "Промокод активирован!")
-                    elif parse_file[user_promos[message.chat.id]]["limit"] == -1:
-                        user_promos[message.chat.id]["/"] = parse_file[user_promos[message.chat.id]["/"]]
-                        print_message(message, "Промокод активирован!")
-                    else:
-                        print_message(message, "Этот промокод уже активирован кем то другим!")
+            try: 
+                user_promos[message.chat.id]
+            except KeyError: 
+                print_message(message, "Такого промокода не существует. Проверьте правильность написания и актуальность и введите другой промокод или  /start для появления главного меню. Мы всегда пишем в @Burrbedy о появлении новых и завершениях действия старых промокодов!")
+                bot.register_next_step_handler(message, get_promocode)
+                return
+            
+            # Use current_promo to avoid redundant lookups and potential KeyError
+            current_promo = user_promos[message.chat.id]
+            if current_promo["limit"] > 0 or current_promo["limit"] == -1:
+                # The logic in the original code seems to be trying to access parse_file again
+                # but it was using the user_promos dictionary incorrectly
+                print_message(message, "Промокод активирован!")
+            else:
+                print_message(message, "Этот промокод уже активирован кем то другим!")
     except: 
         print_message(message, "Пока что нет доступных промокодов!")
         
