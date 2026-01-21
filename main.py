@@ -127,8 +127,6 @@ def purch(call):
                 except: users_settings[call.message.chat.id]["params"] += f". Бот промо: / на {user_promos[call.message.chat.id]["/"]}"
                 
                 print_message(call.message, "Промокод применён!")
-                getCount(call.message)
-                
             
             @bot.callback_query_handler(lambda call: call.data == "ok")
             def post(call):
@@ -257,7 +255,7 @@ def get_promocode(message):
             try: 
                 user_promos[message.chat.id]
             except KeyError: 
-                print_message(message, "Такого промокода не существует. Проверьте правильность написания и актуальность и введите другой промокод или /start для появления главного меню.")
+                print_message(message, "Такого промокода не существует. Введите другой промокод или /start.")
                 bot.register_next_step_handler(message, get_promocode)
                 return
             
@@ -266,7 +264,7 @@ def get_promocode(message):
             if current_promo["limit"] > 0 or current_promo["limit"] == -1:
                 print_message(message, "Промокод активирован!")
             else:
-                print_message(message, "Этот промокод уже активирован кем-то другим!")
+                print_message(message, "Этот промокод уже активирован!")
     except: 
         print_message(message, "Пока что нет доступных промокодов!")
         
